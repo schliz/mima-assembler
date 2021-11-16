@@ -1,0 +1,17 @@
+; mima assembly language example
+
+.data           ; anything written before .data is ignored
+
+mem a1, a2, a3  ; a1, a2 and a3 are memory addresses in which the value 0 is stored
+ask a1          ; mark a1 as an input field
+out a3          ; mark a3 as an output field
+
+.text           ; end of data segment, start of text segment
+
+LDV a1          ; instruction using a memory address (is replaced by the preprocessor)
+NOT             ; instruction without arguments
+STV a2
+LDC 0x1         ; instruction using a literal which will be appended to the opcode
+ADD a2
+STV a3
+HALT            ; the assembler will not check for unreachable code, you will have to do that yourself
