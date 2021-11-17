@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 
     size_t i = lower_bound;
     while (i < file_mem_size && i <= upper_bound) {
-        printf("[%5zX] %6X   %s %5X\n", i, mem[i], data_to_opcode(mem[i]), mem[i] >> 4);
+        printf("[0x%0.5zX] 0x%0.6X   %s 0x%0.5X\n", i, mem[i], data_to_opcode(mem[i]), mem[i] & 0xFFFFF);
         i++;
     }
 
