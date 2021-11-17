@@ -64,7 +64,12 @@ STV a2
 LDC 0x1         ; instruction using a literal which will be appended to the opcode
 ADD a2
 STV a3
-HALT            ; the assembler will not check for unreachable code, you will have to do that yourself
+
+JMP end         ; jump to section ":end"
+LDC 0x0         ; (skipped)
+STV a3          ; (skipped)
+
+HALT     :end   ; the assembler will not check for unreachable code, you will have to do that yourself
 ```
 
 *: Based on the works of [Thorsten Rapp](mailto:Tutor@web.de) 

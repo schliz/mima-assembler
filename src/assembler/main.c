@@ -24,6 +24,7 @@ unsigned int output[OUTPUT_LENGTH]; // outputs, ends with -1
 
 int line_count;
 int next_address;
+int text_address;
 
 struct map* m_def; // replacement definitions
 struct map* m_mem; // memory map
@@ -168,6 +169,32 @@ int word_from_instruction(char* instruction) {
     if (strcmp(instruction, "HALT") == 0) return HALT << 16;
     if (strcmp(instruction, "NOT") == 0) return NOT << 16;
     if (strcmp(instruction, "RAR") == 0) return RAR << 16;
+
+    fprintf(stderr, "Error at instruction %d: invalid token \"%s\"!\n", text_address, instruction);
+    exit(1);
+}
+
+void check_pos_definitions(char* line) {
+    if (strncmp(line, ":", strlen(":")) == 0) {
+        fprintf(stderr, "Error in instruction %d: Line cannot begin with a colon. Always need instruction to jump to!\n", text_address);
+        exit(1);
+    }
+
+    char _line[strlen(line)];
+    strcpy(_line, line);
+    char* beforeColon = strtok(_line, ":");
+
+    if (strcmp(beforeColon, line) == 0) {
+        return; // there are no colons in the line
+    }
+
+    char* tag = strtok(NULL, WHITESPACES);
+
+    if (tag == NULL) {
+        printf("Warning: colon without tag in line: %s", line);
+    } else {
+        map_add(tag, IAR_DEFAULT_VALUE + text_address, m_mem);
+    }
 }
 
 void parse_text_line(char* line) {
@@ -183,6 +210,7 @@ void parse_text_line(char* line) {
     }
 
     write_word(word);
+    text_address++;
 }
 
 void parse_text_segment(FILE* file) {
@@ -217,6 +245,45 @@ void write_file_header() {
     }
 }
 
+void jump_to_text_segment(FILE* file) {
+    char* line = NULL;
+    size_t len = 0;
+
+    while (getline(&line, &len, file) != -1) {
+        char* _line = malloc(strlen(line) * sizeof(char));
+
+        strcpy(_line, line);
+        _line = strtok(_line, ";");
+        _line = trim(_line);
+
+        if (_line == NULL) {
+            fprintf(stderr, "Error: begin of text segment not found before EOF");
+            fclose(file);
+            exit(1);
+        } else if (strncmp(_line, ".text", strlen(".text")) == 0) {
+            break;
+        }
+    }
+}
+
+void preprocess_text_segment(FILE* file) {
+    char* line = NULL;
+    size_t len = 0;
+
+    while (getline(&line, &len, file) != -1) {
+        char* _line = malloc(strlen(line) * sizeof(char));
+
+        strcpy(_line, line);
+        _line = strtok(_line, ";");
+        _line = trim(_line);
+
+        if (strcmp(_line, "") != 0) {
+            check_pos_definitions(line);
+            text_address++;
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 1 || !argv[1]) {
         printf("Usage: miasm <*.miasm>\n");
@@ -241,6 +308,14 @@ int main(int argc, char *argv[]) {
 
     FILE *file = fopen(argv[1], "rb");
 
+    m_def = map_new();
+    m_mem = map_new();
+
+    jump_to_text_segment(file);
+    preprocess_text_segment(file);
+    rewind(file);
+    text_address = 0;
+
     char* line = NULL;
     size_t len = 0;
 
@@ -255,9 +330,6 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-
-    m_def = map_new();
-    m_mem = map_new();
 
     prompts = 0;
     prompt[0] = -1;
