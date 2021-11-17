@@ -1,5 +1,12 @@
 # MIMA Assembler Tools
 
+## Build and Run
+
+This project is build with CMake. After letting CMake build all targets,
+you will find your executables inside the `/bin` folder
+
+## Project Structure
+
 This project consists of three parts:
 - miasm (**MI**MA **as**se**m**bler)
 - midas (**MI**MA **d**is**as**sembler)
